@@ -44,8 +44,8 @@ ScaledBorderAndShadow: yes
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Cap,Poppins SemiBold,50,&H00FFFFFF,&H00FFFFFF,&H00000000,&H78000000,0,0,0,0,100,100,0,0,1,0,2,5,60,60,0,1
-Style: Quote,Courier Prime,58,&H00FFFFFF,&H00FFFFFF,&H00000000,&H64000000,0,0,0,0,100,100,0,0,1,0,2,5,60,60,0,1
+Style: Cap,Poppins SemiBold,64,&H00FFFFFF,&H00FFFFFF,&H00000000,&H78000000,0,0,0,0,100,100,0,0,1,0,2,5,60,60,0,1
+Style: Quote,Courier Prime,76,&H00FFFFFF,&H00FFFFFF,&H00000000,&H50000000,0,0,0,0,100,100,0,0,1,0,3,5,60,60,0,1
 Style: Title,Permanent Marker,230,&H00CFE6F1,&H00CFE6F1,&H00000000,&H00000000,0,0,0,0,100,100,0,-4,1,0,0,5,20,20,0,1
 Style: TitleSub,Permanent Marker,92,&H00CFE6F1,&H00CFE6F1,&H00000000,&H00000000,0,0,0,0,100,100,0,-4,1,0,0,5,20,20,0,1
 Style: Handle,Poppins Medium,24,&H00FFFFFF,&H00FFFFFF,&H00000000,&H64000000,0,0,0,0,100,100,1,0,1,0,1,9,60,70,140,1
@@ -69,11 +69,11 @@ for k in range(1, len(tit) + 1):
     fade = r"{\fad(0,280)}" if k == len(tit) else ""
     ev.append(f"Dialogue: 0,{ts(a)},{ts(b)},Title,,0,0,0,,{{\\pos(540,560)}}{fade}{txt}")
 sa = t0 + len(tit) * step + 0.25
-ev.append(f"Dialogue: 0,{ts(sa)},{ts(t_end)},TitleSub,,0,0,0,,{{\\pos(640,720)\\frz4\\fad(250,280)\\blur6\\t(0,250,\\blur0)}}{sub}")
+SUB_EVENT = (f"Dialogue: 2,{ts(sa)},{ts(t_end)},TitleSub,,0,0,0,,{{\\pos(600,760)\\frz4\\fad(250,280)\\blur6\\t(0,250,\\blur0)}}{sub}")
 open(f"{tmp}/title.ass", "w", encoding="utf-8").write(HEAD + "\n".join(ev) + "\n")
 
 # ---------------- quotes: typewriter serif, keyword in BOLD CAPS, in quotation marks
-fg, quote_spans = [], []
+fg, quote_spans = [SUB_EVENT], []
 for q in S.get("quotes", []):
     i0, i1 = q["words"]
     ws = Wd[i0:i1 + 1]
@@ -111,7 +111,7 @@ for q in S.get("quotes", []):
                 line = ('"' if n else r'{\alpha&HFF&}"{\alpha&H00&}') + line
             if li == len(lines) - 1:
                 line = line + ('"' if n >= len(chars) else r'{\alpha&HFF&}"{\alpha&H00&}')
-            sz = "" if li == 0 else r"{\fs50}"
+            sz = "" if li == 0 else r"{\fs64}"
             out_lines.append(sz + line)
         return "\\N".join(out_lines)
 
@@ -149,9 +149,9 @@ if S.get("handle"):
 open(f"{tmp}/fg.ass", "w", encoding="utf-8").write(HEAD + "\n".join(fg) + "\n")
 
 # ---------------- base: grade + blur-to-focus intro + vignette + grain
-grade = ("colorbalance=rs=-0.06:gs=0.01:bs=0.07:rm=0.02:bm=-0.02:rh=0.06:gh=0.02:bh=-0.05,"
-         "curves=all='0/0.03 0.25/0.19 0.5/0.47 0.8/0.82 1/0.96',eq=saturation=0.82:contrast=1.06,"
-         "vignette=angle=PI/4.2,noise=alls=7:allf=t")
+grade = ("colorbalance=rs=-0.05:gs=0.0:bs=0.05:rm=0.03:gm=0.0:bm=-0.03:rh=0.05:gh=0.02:bh=-0.04,"
+         "curves=all='0/0 0.18/0.10 0.45/0.38 0.75/0.74 1/0.94',eq=saturation=0.86:contrast=1.08:gamma=0.97,"
+         "vignette=angle=PI/3.6,noise=alls=4:allf=t")
 run(["ffmpeg", "-v", "error", "-y", "-i", f"{work}/edit_1.3x.mp4", "-filter_complex",
      f"[0:v]{grade},split[s][b];[b]gblur=sigma=28,format=yuva420p,fade=t=out:st=0.15:d=0.75:alpha=1[bl];"
      f"[s][bl]overlay=eof_action=pass,format=yuv420p[v]",
@@ -217,5 +217,5 @@ fc = (f"color=c=black@0:s={W}x{H}:r={FPS}:d={dur:.3f},format=rgba,subtitles={tmp
       + amix.replace("[0:a]", f"[{2}:a]").replace("[1:a]", f"[{3}:a]"))
 run(["ffmpeg", "-v", "error", "-y", "-i", f"{tmp}/base.mp4", "-framerate", str(FPS), "-i", f"{tmp}/matte/%04d.png"]
     + inputs_a + ["-filter_complex", fc, "-map", "[v]", "-map", "[a]", "-c:v", "libx264", "-preset", "medium",
-                  "-crf", "20", "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart", out])
+                  "-crf", "23", "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart", out])
 print("->", out)
